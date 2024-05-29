@@ -1,0 +1,7 @@
+.Screener {
+    margin:50px auto;
+}
+
+.Screener > table {
+    margin: auto;
+}
