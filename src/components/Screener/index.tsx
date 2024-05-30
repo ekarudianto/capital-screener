@@ -44,6 +44,10 @@ export default function Screener(props: any) {
         accessor: 'bid',
       },
       {
+        Header: 'Change (net)',
+        accessor: 'netChange'
+      },
+      {
         Header: 'Change (%)',
         accessor: 'change',
         sortType: compareNumericString,
@@ -84,6 +88,7 @@ export default function Screener(props: any) {
         offer: item.offer,
         bid: item.bid,
         change: item.percentageChange,
+        netChange: item.netChange,
         marketModes: item.marketModes,
         marketStatus: item.marketStatus
       }
@@ -151,20 +156,21 @@ export default function Screener(props: any) {
                 const isOfferPrice = Header === 'Offer';
                 const isBidPrice = Header === 'Bid';
                 const isChangePercentage = Header === 'Change (%)';
+                const isChangeNet = Header === 'Change (net)';
 
                 const offerPriceClassName = isOfferPrice ? 'offer-price-cell' : '';
                 const bidPriceClassName = isBidPrice ? 'bid-price-cell' : '';
-                let changePercentageClassName = '';
+                let changeClassName = '';
 
-                if (isChangePercentage && value > 0) {
-                  changePercentageClassName = 'offer-price-cell';
-                } else if (isChangePercentage && value < 0) {
-                  changePercentageClassName = 'bid-price-cell';
+                if ((isChangePercentage || isChangeNet) && value > 0) {
+                  changeClassName = 'offer-price-cell';
+                } else if ((isChangePercentage || isChangeNet) && value < 0) {
+                  changeClassName = 'bid-price-cell';
                 }
 
                 return (
                   <td
-                    className={`${offerPriceClassName} ${bidPriceClassName} ${changePercentageClassName}`}
+                    className={`${offerPriceClassName} ${bidPriceClassName} ${changeClassName}`}
                     key={key}
                     {...cell.getCellProps()}
                   >
