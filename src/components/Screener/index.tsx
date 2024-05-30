@@ -1,8 +1,8 @@
-import {useExpanded, useFilters, useGroupBy, usePagination, useSortBy, useTable} from 'react-table';
+import {usePagination, useSortBy, useTable} from 'react-table';
 import { useMemo, useState } from "react";
 import './Screener.css';
 export default function Screener(props: any) {
-  const { credentials: { securityToken, cst }} = props;
+  const { credentials: { securityToken, cst }, filter: { marketType }} = props;
   const backendAPI = 'https://api-capital.backend-capital.com/api/v1';
   const [shares, setShares] = useState([]);
 
@@ -77,7 +77,7 @@ export default function Screener(props: any) {
     const filteredShares = markets
       .filter((market: any) => {
         const isTradeableMarket = !market.marketModes.includes('VIEW_ONLY') || !market.marketModes.includes('CLOSE_ONLY');
-        const isShares = market.instrumentType === "SHARES";
+        const isShares = market.instrumentType === marketType;
         return isTradeableMarket && isShares;
       })
 

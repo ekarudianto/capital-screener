@@ -1,7 +1,6 @@
 import './APICredentials.css';
 
 export default function APICredentials(props: any) {
-
   return (
     <div className='APICredentials'>
       <input
