@@ -128,6 +128,9 @@ export default function Screener(props: any) {
         Fetch data
       </button>
 
+      <div>
+        Total rows: {shares.length}
+      </div>
       <table {...getTableProps()}>
         <thead>
         {headerGroups.map((headerGroup: any) => (
