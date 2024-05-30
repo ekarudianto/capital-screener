@@ -77,8 +77,8 @@ export default function Screener(props: any) {
     const filteredShares = markets
       .filter((market: any) => {
         const isTradeableMarket = !market.marketModes.includes('VIEW_ONLY') || !market.marketModes.includes('CLOSE_ONLY');
-        const isShares = market.instrumentType === marketType;
-        return isTradeableMarket && isShares;
+        const isSelectedMarketType = market.instrumentType === marketType;
+        return isTradeableMarket && isSelectedMarketType;
       })
 
     setShares(filteredShares.map((item: any) => {
