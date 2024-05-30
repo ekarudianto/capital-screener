@@ -33,6 +33,10 @@ export default function Screener(props: any) {
         Header: 'Change',
         accessor: 'change',
       },
+      {
+        Header: 'Market Status',
+        accessor: 'marketStatus',
+      },
     ],
     []
   )
@@ -44,19 +48,30 @@ export default function Screener(props: any) {
       },
     });
     const { markets } = await response.json();
+
+    if (!markets) {
+      alert('data is not available!');
+      return;
+    }
+
     const filteredShares = markets
-      .filter((market: any) => market.instrumentType === "SHARES")
-      .slice(3850)
-      .map((item: any) => {
-        return {
-          ticker: item.epic,
-          name: item.instrumentName,
-          offer: item.offer,
-          bid: item.bid,
-          change: item.percentageChange
-        }
-      });
-    setShares(filteredShares);
+      .filter((market: any, index: number) => {
+        const isRegularMarket = market.marketModes.includes('REGULAR');
+        const isShares = market.instrumentType === "SHARES";
+        return isRegularMarket && isShares && index < 30;
+      })
+
+    setShares(filteredShares.map((item: any) => {
+      return {
+        ticker: item.epic,
+        name: item.instrumentName,
+        offer: item.offer,
+        bid: item.bid,
+        change: item.percentageChange,
+        marketModes: item.marketModes,
+        marketStatus: item.marketStatus
+      }
+    }));
   };
 
   const handleClick = (e: any) => {
@@ -76,19 +91,14 @@ export default function Screener(props: any) {
       <button onClick={handleClick}>
         Fetch data
       </button>
-      <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
+
+      <table {...getTableProps()}>
         <thead>
         {headerGroups.map((headerGroup: any) => (
           <tr {...headerGroup.getHeaderGroupProps()}>
             {headerGroup.headers.map((column: any) => (
               <th
                 {...column.getHeaderProps(column.getSortByToggleProps())}
-                style={{
-                  borderBottom: 'solid 3px red',
-                  background: 'aliceblue',
-                  color: 'black',
-                  fontWeight: 'bold',
-                }}
               >
                 {column.render('Header')}
                 <span>
@@ -103,16 +113,27 @@ export default function Screener(props: any) {
         {rows.map((row: any) => {
           prepareRow(row)
           return (
-            <tr {...row.getRowProps()}>
+            <tr key={row.id} {...row.getRowProps()}>
               {row.cells.map((cell: any) => {
+                const { key } = cell.getCellProps();
+                const { column: { Header }, value} = cell;
+                const isOfferPrice = Header === 'Offer';
+                const isBidPrice = Header === 'Bid';
+                const isChangePercentage = Header === 'Change';
+
+                const offerPriceClassName = isOfferPrice ? 'offer-price-cell' : '';
+                const bidPriceClassName = isBidPrice ? 'bid-price-cell' : '';
+                let changePercentageClassName = '';
+
+                if (isChangePercentage) {
+                  changePercentageClassName = value > 0 ? 'offer-price-cell' : 'bid-price-cell';
+                }
+
                 return (
                   <td
+                    className={`${offerPriceClassName} ${bidPriceClassName} ${changePercentageClassName}`}
+                    key={key}
                     {...cell.getCellProps()}
-                    style={{
-                      padding: '10px',
-                      border: 'solid 1px gray',
-                      background: 'papayawhip',
-                    }}
                   >
                     {cell.render('Cell')}
                   </td>

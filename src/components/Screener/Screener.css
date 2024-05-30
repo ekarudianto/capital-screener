@@ -3,5 +3,32 @@
 }
 
 .Screener > table {
-    margin: auto;
+    margin: 10px auto 0;
+    border: solid 1px;
+}
+
+.Screener > table > thead th {
+    background: aliceblue;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.Screener > table > thead th:hover {
+    cursor: pointer;
+}
+
+.Screener > table > tbody {
+    font-size: 13px;
+}
+
+.Screener > table > tbody td {
+    border: solid 1px gray;
+}
+
+.offer-price-cell {
+    color: #44a003;
+}
+
+.bid-price-cell {
+    color: #e20909;
 }
