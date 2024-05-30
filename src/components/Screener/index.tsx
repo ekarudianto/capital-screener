@@ -37,7 +37,6 @@ export default function Screener(props: any) {
     []
   )
   const fetchData = async() => {
-    setShares([]);
     const response = await fetch(`${backendAPI}/markets`, {
       headers: {
         "X-SECURITY-TOKEN": securityToken,
@@ -47,6 +46,7 @@ export default function Screener(props: any) {
     const { markets } = await response.json();
     const filteredShares = markets
       .filter((market: any) => market.instrumentType === "SHARES")
+      .slice(3850)
       .map((item: any) => {
         return {
           ticker: item.epic,
@@ -74,7 +74,7 @@ export default function Screener(props: any) {
   return (
     <div className='Screener'>
       <button onClick={handleClick}>
-        Click me
+        Fetch data
       </button>
       <table {...getTableProps()} style={{ border: 'solid 1px blue' }}>
         <thead>
@@ -91,6 +91,9 @@ export default function Screener(props: any) {
                 }}
               >
                 {column.render('Header')}
+                <span>
+                  {column.isSorted ? (column.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
+                </span>
               </th>
             ))}
           </tr>
