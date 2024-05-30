@@ -9,6 +9,9 @@ export default function APICredentials(props: any) {
         name='securityToken'
         placeholder='security token'
         onChange={e => props.updateSecurityToken(e.target.value)}
+        style={{
+          'marginRight': '10px',
+        }}
       />
 
       <input

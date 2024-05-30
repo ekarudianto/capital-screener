@@ -1,4 +1,4 @@
-import {useSortBy, useTable} from 'react-table';
+import {useExpanded, useFilters, useGroupBy, usePagination, useSortBy, useTable} from 'react-table';
 import { useMemo, useState } from "react";
 import './Screener.css';
 export default function Screener(props: any) {
@@ -10,6 +10,20 @@ export default function Screener(props: any) {
     () => shares,
     [shares]
   )
+
+  function compareNumericString(rowA:any, rowB:any, id:number, desc:any) {
+    let a = Number.parseFloat(rowA.values[id]);
+    let b = Number.parseFloat(rowB.values[id]);
+    if (Number.isNaN(a)) {  // Blanks and non-numeric strings to bottom
+      a = desc ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+    }
+    if (Number.isNaN(b)) {
+      b = desc ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+    }
+    if (a > b) return 1;
+    if (a < b) return -1;
+    return 0;
+  }
 
   const columns: any = useMemo(
     () => [
@@ -30,8 +44,9 @@ export default function Screener(props: any) {
         accessor: 'bid',
       },
       {
-        Header: 'Change',
+        Header: 'Change (%)',
         accessor: 'change',
+        sortType: compareNumericString,
       },
       {
         Header: 'Market Status',
@@ -51,14 +66,15 @@ export default function Screener(props: any) {
 
     if (!markets) {
       alert('data is not available!');
+      setShares([]);
       return;
     }
 
     const filteredShares = markets
-      .filter((market: any, index: number) => {
-        const isRegularMarket = market.marketModes.includes('REGULAR');
+      .filter((market: any) => {
+        const isTradeableMarket = !market.marketModes.includes('VIEW_ONLY') || !market.marketModes.includes('CLOSE_ONLY');
         const isShares = market.instrumentType === "SHARES";
-        return isRegularMarket && isShares && index < 30;
+        return isTradeableMarket && isShares;
       })
 
     setShares(filteredShares.map((item: any) => {
@@ -74,7 +90,7 @@ export default function Screener(props: any) {
     }));
   };
 
-  const handleClick = (e: any) => {
+  const handleClick = () => {
     fetchData();
   };
 
@@ -82,9 +98,24 @@ export default function Screener(props: any) {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    page,
     prepareRow,
-  } = useTable({columns, data}, useSortBy)
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize },
+  }: any = useTable(
+    {
+      columns, data
+    },
+    useSortBy,
+    usePagination,
+  );
 
   return (
     <div className='Screener'>
@@ -110,7 +141,7 @@ export default function Screener(props: any) {
         ))}
         </thead>
         <tbody {...getTableBodyProps()}>
-        {rows.map((row: any) => {
+        {page.map((row: any) => {
           prepareRow(row)
           return (
             <tr key={row.id} {...row.getRowProps()}>
@@ -119,14 +150,16 @@ export default function Screener(props: any) {
                 const { column: { Header }, value} = cell;
                 const isOfferPrice = Header === 'Offer';
                 const isBidPrice = Header === 'Bid';
-                const isChangePercentage = Header === 'Change';
+                const isChangePercentage = Header === 'Change (%)';
 
                 const offerPriceClassName = isOfferPrice ? 'offer-price-cell' : '';
                 const bidPriceClassName = isBidPrice ? 'bid-price-cell' : '';
                 let changePercentageClassName = '';
 
-                if (isChangePercentage) {
-                  changePercentageClassName = value > 0 ? 'offer-price-cell' : 'bid-price-cell';
+                if (isChangePercentage && value > 0) {
+                  changePercentageClassName = 'offer-price-cell';
+                } else if (isChangePercentage && value < 0) {
+                  changePercentageClassName = 'bid-price-cell';
                 }
 
                 return (
@@ -144,6 +177,54 @@ export default function Screener(props: any) {
         })}
         </tbody>
       </table>
+
+      { shares.length > 0 &&
+        <div className="pagination">
+          <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+            {'<<'}
+          </button>{' '}
+          <button onClick={() => previousPage()} disabled={!canPreviousPage}>
+            {'<'}
+          </button>{' '}
+          <button onClick={() => nextPage()} disabled={!canNextPage}>
+            {'>'}
+          </button>{' '}
+          <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+            {'>>'}
+          </button>{' '}
+          <span>
+          Page{' '}
+            <strong>
+            {pageIndex + 1} of {pageOptions.length}
+          </strong>{' '}
+        </span>
+          <span>
+          | Go to page:{' '}
+            <input
+              type="number"
+              defaultValue={pageIndex + 1}
+              onChange={e => {
+                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                gotoPage(page)
+              }}
+              style={{ width: '100px' }}
+            />
+        </span>{' '}
+          <select
+            value={pageSize}
+            onChange={e => {
+              setPageSize(Number(e.target.value))
+            }}
+          >
+            {[10, 20, 30, 40, 50, 100].map(pageSize => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </select>
+        </div>
+      }
+
     </div>
   );
 }
