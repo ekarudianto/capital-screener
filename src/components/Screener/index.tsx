@@ -1,6 +1,7 @@
 import {usePagination, useSortBy, useTable} from 'react-table';
 import { useMemo, useState } from "react";
 import './Screener.css';
+import {MarketModes, MarketStatus} from "../../config/constants";
 export default function Screener(props: any) {
   const { credentials: { securityToken, cst }, filter: { marketType }} = props;
   const backendAPI = 'https://api-capital.backend-capital.com/api/v1';
@@ -56,6 +57,10 @@ export default function Screener(props: any) {
         Header: 'Market Status',
         accessor: 'marketStatus',
       },
+      {
+        Header: 'Market Modes',
+        accessor: 'marketModes',
+      }
     ],
     []
   )
@@ -76,9 +81,8 @@ export default function Screener(props: any) {
 
     const filteredShares = markets
       .filter((market: any) => {
-        const isTradeableMarket = !market.marketModes.includes('VIEW_ONLY') || !market.marketModes.includes('CLOSE_ONLY');
         const isSelectedMarketType = market.instrumentType === marketType;
-        return isTradeableMarket && isSelectedMarketType;
+        return isSelectedMarketType;
       })
 
     setShares(filteredShares.map((item: any) => {
@@ -89,8 +93,8 @@ export default function Screener(props: any) {
         bid: item.bid,
         change: item.percentageChange,
         netChange: item.netChange,
-        marketModes: item.marketModes,
-        marketStatus: item.marketStatus
+        marketModes: item.marketModes.join(','),
+        marketStatus: item.marketStatus,
       }
     }));
   };
@@ -152,7 +156,7 @@ export default function Screener(props: any) {
         {page.map((row: any) => {
           prepareRow(row)
           return (
-            <tr key={row.id} {...row.getRowProps()}>
+            <tr key={row.id} {...row.getRowProps()} className="row">
               {row.cells.map((cell: any) => {
                 const { key } = cell.getCellProps();
                 const { column: { Header }, value} = cell;
@@ -160,9 +164,13 @@ export default function Screener(props: any) {
                 const isBidPrice = Header === 'Bid';
                 const isChangePercentage = Header === 'Change (%)';
                 const isChangeNet = Header === 'Change (net)';
+                const isMarketStatus = Header === 'Market Status';
+                const isMarketModes = Header === 'Market Modes';
 
                 const offerPriceClassName = isOfferPrice ? 'offer-price-cell' : '';
                 const bidPriceClassName = isBidPrice ? 'bid-price-cell' : '';
+                const marketStatusClassName = isMarketStatus && value === MarketStatus.TRADEABLE ? 'offer-price-cell bold' : '';
+                const marketModesClassName = isMarketModes && value.includes(MarketModes.REGULAR) ? 'offer-price-cell bold' : '';
                 let changeClassName = '';
 
                 if ((isChangePercentage || isChangeNet) && value > 0) {
@@ -173,7 +181,13 @@ export default function Screener(props: any) {
 
                 return (
                   <td
-                    className={`${offerPriceClassName} ${bidPriceClassName} ${changeClassName}`}
+                    className={`
+                      ${offerPriceClassName} 
+                      ${bidPriceClassName} 
+                      ${changeClassName} 
+                      ${marketStatusClassName}
+                      ${marketModesClassName}`
+                  }
                     key={key}
                     {...cell.getCellProps()}
                   >
